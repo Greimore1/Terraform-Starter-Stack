@@ -1,7 +1,7 @@
 # AWS Free Tier Terraform Project
 
 ## Overview
-This Terraform project demonstrates a minimal AWS infrastructure setup utilizing Free Tier resources across multiple AWS services:
+This Terraform project demonstrates a minimal AWS infrastructure setup utilising Free Tier resources across multiple AWS services:
 - RDS (MySQL)
 - S3 Bucket
 - EC2 Instance
@@ -26,30 +26,12 @@ This Terraform project demonstrates a minimal AWS infrastructure setup utilizing
 7. **RDS**: MySQL database on db.t3.micro
 
 ## Important Considerations
-- All resources are configured to maximize Free Tier eligibility
+- All resources are configured to maximise Free Tier eligibility
 - Ensure you monitor AWS usage to stay within Free Tier limits
-- Credentials and sensitive data are hardcoded for demonstration (NOT recommended for production)
+- Credentials and sensitive data are hardcoded for demonstration
 
 ## Setup Instructions
 1. Clone this repository
 2. Run `terraform init`
 3. Run `terraform plan` to verify resources
 4. Run `terraform apply`
-
-## Cost Management
-- Regularly check AWS billing console
-- Set up billing alerts
-- Destroy resources when not in use with `terraform destroy`
-
-## Security Notes
-- Replace hardcoded credentials in production
-- Use AWS Secrets Manager for sensitive information
-- Implement more restrictive IAM policies
-
-## Potential Improvements
-- Add network security groups
-- Implement more granular IAM permissions
-- Add encryption for sensitive resources
-
-## Cleanup
-To avoid unexpected charges, always run `terraform destroy` when resources are no longer needed.
