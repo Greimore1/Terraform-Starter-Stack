@@ -1,0 +1,135 @@
+# main.tf
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
+  }
+}
+
+# Configure the AWS Provider
+provider "aws" {
+  region = "eu-west-2"  # Free tier friendly region
+}
+
+# Create VPC
+resource "aws_vpc" "free_tier_vpc" {
+  cidr_block = "10.0.0.0/16"
+  
+  tags = {
+    Name = "Free Tier VPC"
+  }
+}
+
+# Create Subnet
+resource "aws_subnet" "free_tier_subnet" {
+  vpc_id     = aws_vpc.free_tier_vpc.id
+  cidr_block = "10.0.1.0/24"
+  
+  tags = {
+    Name = "Free Tier Subnet"
+  }
+}
+
+# IAM Role for EC2
+resource "aws_iam_role" "ec2_role" {
+  name = "free-tier-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM Policy for S3 Access
+resource "aws_iam_role_policy" "s3_access_policy" {
+  name = "free-tier-s3-access"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Effect   = "Allow"
+        Resource = [
+          aws_s3_bucket.free_tier_bucket.arn,
+          "${aws_s3_bucket.free_tier_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# S3 Bucket
+resource "aws_s3_bucket" "free_tier_bucket" {
+  bucket = "free-tier-project-bucket-${random_id.bucket_suffix.hex}"
+  
+  tags = {
+    Name = "Free Tier S3 Bucket"
+  }
+}
+
+# Random suffix for S3 bucket to ensure uniqueness
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+# EBS Volume
+resource "aws_ebs_volume" "free_tier_volume" {
+  availability_zone = "us-east-1a"
+  size              = 1  # 1GB to stay in free tier
+  type              = "gp2"
+
+  tags = {
+    Name = "Free Tier EBS Volume"
+  }
+}
+
+# EFS File System
+resource "aws_efs_file_system" "free_tier_efs" {
+  creation_token = "free-tier-efs"
+
+  tags = {
+    Name = "Free Tier EFS"
+  }
+}
+
+# EC2 Instance
+resource "aws_instance" "free_tier_instance" {
+  ami           = "ami-0cff7e2a30134a3e3"  # Amazon Linux 2 AMI (free tier eligible)
+  instance_type = "t2.micro"  # Free tier instance type
+  subnet_id     = aws_subnet.free_tier_subnet.id
+
+  tags = {
+    Name = "Free Tier EC2 Instance"
+  }
+}
+
+# RDS MySQL Instance (Free Tier)
+resource "aws_db_instance" "free_tier_db" {
+  identifier           = "free-tier-mysql-db"
+  engine               = "mysql"
+  engine_version       = "8.0"
+  instance_class       = "db.t3.micro"  # Free tier DB instance
+  allocated_storage    = 20  # Minimum for free tier
+  storage_type         = "gp2"
+
+  username             = "admin"
+  password             = "FreeT1erP@ssw0rd!"
+
+  skip_final_snapshot  = true
+}
